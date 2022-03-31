@@ -29,7 +29,7 @@ internal class AstronomicalTriggerPropertiesController(
 ) : BaseController() {
 
     init {
-        myWebControllerManager.registerController("astronomicalTrigger.html", this)
+        myWebControllerManager.registerController("/astronomicalTrigger.html", this)
     }
 
     override fun doHandle(request: HttpServletRequest, response: HttpServletResponse): ModelAndView? {
