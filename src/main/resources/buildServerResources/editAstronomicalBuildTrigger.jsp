@@ -10,25 +10,52 @@
             event occurs for the specified location (defined using latitude and longitude coordinates).</em>
     </td>
 </tr>
-
-<tr class="noBorder" >
+<tr class="groupingTitle">
+    <td colspan="2">Location</td>
+</tr>
+<tr class="noBorder">
     <th><label for="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>">Latitude: <l:star/></label></th>
     <td>
         <props:textProperty name="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>"/>
-        <span class="smallNote">
-          The timings of astronomical events will be based on this latitude
-      </span>
         <span class="error" id="error_<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>"></span>
     </td>
 </tr>
-
-<tr class="noBorder" >
+<tr class="noBorder">
     <th><label for="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>">Longitude: <l:star/></label></th>
     <td>
         <props:textProperty name="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>"/>
-        <span class="smallNote">
-          The timings of astronomical events will be based on this longitude
-      </span>
         <span class="error" id="error_<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>"></span>
+    </td>
+</tr>
+<tr class="groupingTitle">
+    <td colspan="2">Astronomical Event</td>
+</tr>
+<tr class="noBorder">
+    <th><label for="<%=AstronomicalTriggerUtil.EVENT_PARAM%>">Event: <l:star/></label></th>
+    <td class="noBorder">
+        <props:selectProperty name="<%=AstronomicalTriggerUtil.EVENT_PARAM%>" enableFilter="true">
+            <props:option value="sunrise">Sunrise</props:option>
+            <props:option value="sunset">Sunset</props:option>
+            <props:option value="civil_start">Civil Twilight - Start</props:option>
+            <props:option value="civil_end">Civil Twilight - End</props:option>
+            <props:option value="nautical_start">Nautical Twilight - Start</props:option>
+            <props:option value="nautical_end">Nautical Twilight - End</props:option>
+            <props:option value="astronomical_start">Astronomical Twilight - Start</props:option>
+            <props:option value="astronomical_end">Astronomical Twilight - End</props:option>
+        </props:selectProperty>
+    </td>
+</tr>
+<tr class="noBorder">
+    <th><label for="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">Offset (minutes): <l:star/></label></th>
+    <td class="noBorder">
+        <props:selectProperty name="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">
+            <c:forEach begin="0" end="55" step="5" varStatus="pos">
+                <props:option value="${pos.index-60}">${pos.index-60}</props:option>
+            </c:forEach>
+            <props:option value="0">0</props:option>
+            <c:forEach begin="5" end="60" step="5" varStatus="pos">
+                <props:option value="${pos.index}">+${pos.index}</props:option>
+            </c:forEach>
+        </props:selectProperty>
     </td>
 </tr>

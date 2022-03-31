@@ -12,6 +12,8 @@ private const val HISTORY_SIZE = 20
 internal object AstronomicalTriggerUtil {
     const val LATITUDE_PARAM = "astronomical.trigger.latitude"
     const val LONGITUDE_PARAM = "astronomical.trigger.longitude"
+    const val EVENT_PARAM = "astronomical.trigger.event"
+    const val OFFSET_PARAM = "astronomical.trigger.offset"
 
     const val TRIGGER_POLICY_NAME = "triggerPolicy"
 

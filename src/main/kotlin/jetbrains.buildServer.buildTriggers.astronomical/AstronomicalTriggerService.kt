@@ -53,9 +53,8 @@ class AstronomicalTriggerService(
     }
 
     override fun getEditParametersUrl(): String {
-        return "astronomicalTrigger.html"
+        return myPluginDescriptor.getPluginResourcesPath("editAstronomicalBuildTrigger.jsp")
     }
-        //myPluginDescriptor.getPluginResourcesPath("editAstronomicalBuildTrigger.html")
 
     override fun getBuildTriggeringPolicy() = myPolicy
     override fun isMultipleTriggersPerBuildTypeAllowed() = true
