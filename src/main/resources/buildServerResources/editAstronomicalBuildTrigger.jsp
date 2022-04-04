@@ -9,7 +9,7 @@
         <em>
             Astronomical build trigger will add a build to the queue on a daily basis whenever the selected astronomical
             event occurs for the specified location (defined using latitude and longitude coordinates). This trigger
-            leverages the free API offered by <a href="https://sunrise-sunset.org/api" target="_blank">Sunrise-Sunset</a>.
+            leverages a free API offered by <a href="https://sunrise-sunset.org/api" target="_blank">Sunrise-Sunset</a>.
         </em>
     </td>
 </tr>
@@ -17,7 +17,7 @@
     <td colspan="2">Location</td>
 </tr>
 <tr class="noBorder">
-    <td class="_label noBorder">
+    <td class="_label noBorder" style="vertical-align: top;">
         <label for="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>">Latitude:<l:star/></label>
     </td>
     <td class="noBorder">
@@ -26,7 +26,7 @@
     </td>
 </tr>
 <tr class="noBorder">
-    <td class="_label noBorder">
+    <td class="_label noBorder" style="vertical-align: top;">
         <label for="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>">Longitude:<l:star/></label>
     </td>
     <td class="noBorder">

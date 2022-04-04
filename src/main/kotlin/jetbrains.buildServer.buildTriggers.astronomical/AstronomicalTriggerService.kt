@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger
 import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor
 import jetbrains.buildServer.buildTriggers.BuildTriggerService
 import jetbrains.buildServer.buildTriggers.async.AsyncPolledBuildTriggerFactory
-import jetbrains.buildServer.buildTriggers.astronomical.controller.AstronomicalTriggerPropertiesController
 import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.ProjectManager
 import jetbrains.buildServer.serverSide.PropertiesProcessor
@@ -29,6 +28,44 @@ class AstronomicalTriggerService(
     override fun getName() = "teamcityAstronomicalTrigger"
     override fun getDisplayName() = "Astronomical Trigger"
 
+    override fun getDefaultTriggerProperties(): Map<String, String> {
+        val defaults = mutableMapOf<String, String>() // MutableMap<String, String> = HashMap()
+        defaults[AstronomicalTriggerUtil.OFFSET_PARAM] = "0"
+        return defaults
+    }
+
+    override fun getTriggerPropertiesProcessor() = PropertiesProcessor { properties: Map<String, String> ->
+        val errors = mutableListOf<InvalidProperty>()
+
+        val latitude = properties[AstronomicalTriggerUtil.LATITUDE_PARAM]
+        if (latitude.isNullOrEmpty()) {
+            errors.add(InvalidProperty(AstronomicalTriggerUtil.LATITUDE_PARAM, "Latitude is required"))
+        } else {
+            val latitudeNum = latitude.toFloatOrNull()
+
+            if (latitudeNum == null) {
+                errors.add(InvalidProperty(AstronomicalTriggerUtil.LATITUDE_PARAM, "Latitude is not in the correct format"))
+            } else if (latitudeNum < -90 || latitudeNum > 90) {
+                errors.add(InvalidProperty(AstronomicalTriggerUtil.LATITUDE_PARAM, "Latitude must be in the range of -90 to 90 degrees inclusive"))
+            }
+        }
+
+        val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]
+        if (longitude.isNullOrEmpty()) {
+            errors.add(InvalidProperty(AstronomicalTriggerUtil.LONGITUDE_PARAM, "Longitude is required"))
+        } else {
+            val longitudeNum = longitude.toFloatOrNull()
+
+            if (longitudeNum == null) {
+                errors.add(InvalidProperty(AstronomicalTriggerUtil.LONGITUDE_PARAM, "Longitude is not in the correct format"))
+            } else if (longitudeNum < -180 || longitudeNum > 180) {
+                errors.add(InvalidProperty(AstronomicalTriggerUtil.LONGITUDE_PARAM, "Longitude must be in the range of -180 to 180 degrees inclusive"))
+            }
+        }
+
+        errors
+    }
+
     override fun describeTrigger(buildTriggerDescriptor: BuildTriggerDescriptor): String {
         val properties = buildTriggerDescriptor.properties
         val policyName = AstronomicalTriggerUtil.getTargetTriggerPolicyName(properties)
@@ -44,12 +81,6 @@ class AstronomicalTriggerService(
             else "(disabled)"
 
         return "Uses $policyName $disabledStatus"
-    }
-
-    override fun getTriggerPropertiesProcessor() = PropertiesProcessor { properties: Map<String, String> ->
-        val errors = mutableListOf<InvalidProperty>()
-
-        errors
     }
 
     override fun getEditParametersUrl(): String {
