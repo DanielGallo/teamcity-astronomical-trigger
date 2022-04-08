@@ -2,6 +2,8 @@
 <%@ page import="jetbrains.buildServer.buildTriggers.astronomical.AstronomicalTriggerUtil" %>
 <%@ page import="jetbrains.buildServer.buildTriggers.astronomical.controller.AstronomicalTriggerPropertiesController" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
+<%@ taglib prefix="forms" tagdir="/WEB-INF/tags/forms" %>
+<%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <jsp:useBean id="propertiesBean" type="jetbrains.buildServer.controllers.BasePropertiesBean" scope="request"/>
 
 <tr class="noBorder" >
@@ -72,3 +74,28 @@
             60 minutes before or after the selected astronomical event.</span>
     </td>
 </tr>
+
+<script>
+    $j(document).ready(function() {
+        let placeholder = $j("span#editTriggerAdditionalButtons");
+
+        if (placeholder.length === 0) {
+            $j("<span id=\"editTriggerAdditionalButtons\" class=\"additionalButtonsContainer\"></span>").insertBefore("#editTrigger a.btn.cancel");
+            placeholder = $j("span#editTriggerAdditionalButtons");
+        }
+
+        if (placeholder.length) {
+            placeholder.empty();
+            placeholder.append($j("span#triggerCalculateTimeButton *"));
+        }
+    });
+</script>
+
+<span id="triggerCalculateTimeButton" style="display: none;">
+  <forms:submit id="calculateTimeButton" type="button" label="Calculate next trigger" />
+</span>
+<bs:dialog dialogId="calculateTimeDialog" title="Calculate Astronomical Trigger Time" closeCommand="BS.TestConnectionDialog.close();"
+           closeAttrs="showdiscardchangesmessage='false'">
+    <div id="testConnectionStatus"></div>
+    <div id="testConnectionDetails" class="mono"></div>
+</bs:dialog>

@@ -29,7 +29,7 @@ class AstronomicalTriggerService(
     override fun getDisplayName() = "Astronomical Trigger"
 
     override fun getDefaultTriggerProperties(): Map<String, String> {
-        val defaults = mutableMapOf<String, String>() // MutableMap<String, String> = HashMap()
+        val defaults = mutableMapOf<String, String>()
         defaults[AstronomicalTriggerUtil.OFFSET_PARAM] = "0"
         return defaults
     }

@@ -2,8 +2,8 @@ import com.github.jk1.license.render.*
 
 plugins {
     kotlin("jvm") version "1.3.72"
-    id("com.github.rodm.teamcity-server") version "1.3.1"
-    id("com.github.rodm.teamcity-environments") version "1.3.1"
+    id("com.github.rodm.teamcity-server") version "1.4.1"
+    id("com.github.rodm.teamcity-environments") version "1.4.1"
     id ("com.github.jk1.dependency-license-report") version "1.17"
 }
 
@@ -48,7 +48,7 @@ tasks {
 }
 
 teamcity {
-    version = "2020.2"
+    version = "2021.2"
 
     server {
         archiveName = "astronomical-trigger.zip"
@@ -62,11 +62,10 @@ teamcity {
         }
     }
     environments {
-        baseHomeDir = "teamcity/servers"
-        baseDataDir = "${rootDir}/data"
-
-        create("teamcity2020.2") {
-            version = "2020.2.2"
+        register("teamcity2021.2") {
+            version = "2021.2.3"
+            dataDir = "../../../.BuildServer"
+            homeDir = "../../../TeamCity"
         }
     }
 }
