@@ -47,12 +47,13 @@
         <props:selectProperty name="<%=AstronomicalTriggerUtil.EVENT_PARAM%>" enableFilter="true">
             <props:option value="sunrise">Sunrise</props:option>
             <props:option value="sunset">Sunset</props:option>
-            <props:option value="civil_start">Civil Twilight - Start</props:option>
-            <props:option value="civil_end">Civil Twilight - End</props:option>
-            <props:option value="nautical_start">Nautical Twilight - Start</props:option>
-            <props:option value="nautical_end">Nautical Twilight - End</props:option>
-            <props:option value="astronomical_start">Astronomical Twilight - Start</props:option>
-            <props:option value="astronomical_end">Astronomical Twilight - End</props:option>
+            <props:option value="solar_noon">Solar Noon</props:option>
+            <props:option value="civil_twilight_begin">Civil Twilight - Begin</props:option>
+            <props:option value="civil_twilight_end">Civil Twilight - End</props:option>
+            <props:option value="nautical_twilight_begin">Nautical Twilight - Begin</props:option>
+            <props:option value="nautical_twilight_end">Nautical Twilight - End</props:option>
+            <props:option value="astronomical_twilight_begin">Astronomical Twilight - Begin</props:option>
+            <props:option value="astronomical_twilight_end">Astronomical Twilight - End</props:option>
         </props:selectProperty>
     </td>
 </tr>
@@ -74,26 +75,31 @@
             60 minutes before or after the selected astronomical event.</span>
     </td>
 </tr>
+<tr class="noBorder">
+    <td class="_label noBorder"></td>
+    <td class="noBorder">
+        <forms:button id="calculateTriggerTime" onclick="BS.AstronomicalTrigger.calculateTriggerTime(); return false;">Calculate next trigger time</forms:button>
+    </td>
+</tr>
 
 <script>
-    $j(document).ready(function() {
-        let placeholder = $j("span#editTriggerAdditionalButtons");
-
-        if (placeholder.length === 0) {
-            $j("<span id=\"editTriggerAdditionalButtons\" class=\"additionalButtonsContainer\"></span>").insertBefore("#editTrigger a.btn.cancel");
-            placeholder = $j("span#editTriggerAdditionalButtons");
+    BS.AstronomicalTrigger = {
+        calculateTriggerTime: function() {
+            BS.ajaxRequest(window['base_uri'] + "/checkAstronomicalTriggerTime.html", {
+                parameters: {
+                    latitude: $("<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>").getValue(),
+                    longitude: $("<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>").getValue(),
+                    event: $("<%=AstronomicalTriggerUtil.EVENT_PARAM%>").getValue(),
+                    offset: $("<%=AstronomicalTriggerUtil.OFFSET_PARAM%>").getValue()
+                },
+                onSuccess: function() {
+                    console.log(arguments);
+                }
+            });
         }
-
-        if (placeholder.length) {
-            placeholder.empty();
-            placeholder.append($j("span#triggerCalculateTimeButton *"));
-        }
-    });
+    }
 </script>
 
-<span id="triggerCalculateTimeButton" style="display: none;">
-  <forms:submit id="calculateTimeButton" type="button" label="Calculate next trigger" />
-</span>
 <bs:dialog dialogId="calculateTimeDialog" title="Calculate Astronomical Trigger Time" closeCommand="BS.TestConnectionDialog.close();"
            closeAttrs="showdiscardchangesmessage='false'">
     <div id="testConnectionStatus"></div>

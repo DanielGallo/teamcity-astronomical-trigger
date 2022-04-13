@@ -1,7 +1,8 @@
-import com.github.jk1.license.render.*
+import com.github.jk1.license.render.JsonReportRenderer
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.6.20"
+    kotlin("plugin.serialization") version "1.6.20"
     id("com.github.rodm.teamcity-server") version "1.4.1"
     id("com.github.rodm.teamcity-environments") version "1.4.1"
     id ("com.github.jk1.dependency-license-report") version "1.17"
@@ -12,6 +13,7 @@ val pluginVersion = project.findProperty("PluginVersion") ?: "999999-snapshot"
 version = pluginVersion
 
 val teamcityVersion = "2022.1-SNAPSHOT"
+val ktorVersion = "2.0.0"
 
 extra["teamcityVersion"] = teamcityVersion
 extra["downloadsDir"] = project.findProperty("downloads.dir") ?: "${rootDir}/downloads"
@@ -23,9 +25,15 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
+    implementation("io.ktor:ktor-client-core:${ktorVersion}")
+    implementation("io.ktor:ktor-client-cio:${ktorVersion}")
+    implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.2")
     implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
     implementation("com.github.ben-manes.caffeine:caffeine:2.9.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 
     provided("org.jetbrains.teamcity:server-api:${teamcityVersion}")
     provided("org.jetbrains.teamcity:oauth:${teamcityVersion}")
@@ -62,10 +70,11 @@ teamcity {
         }
     }
     environments {
+        baseHomeDir = "teamcity/servers"
+        baseDataDir = "teamcity/data"
+
         register("teamcity2021.2") {
             version = "2021.2.3"
-            dataDir = "../../../.BuildServer"
-            homeDir = "../../../TeamCity"
         }
     }
 }

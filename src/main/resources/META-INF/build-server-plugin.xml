@@ -11,5 +11,6 @@
                http://www.springframework.org/schema/context/spring-context-3.0.xsd"
        default-autowire="constructor">
     <context:component-scan base-package="jetbrains.buildServer.buildTriggers.astronomical"/>
+    <bean class="jetbrains.buildServer.buildTriggers.astronomical.action.AstronomicalTriggerAction" />
 </beans>
 

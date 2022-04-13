@@ -1,6 +1,7 @@
 package jetbrains.buildServer.buildTriggers.astronomical
 
 import com.intellij.openapi.diagnostic.Logger
+import jetbrains.buildServer.log.Loggers
 import jetbrains.buildServer.serverSide.*
 import jetbrains.buildServer.serverSide.crypt.EncryptUtil
 import jetbrains.buildServer.web.openapi.PluginDescriptor
