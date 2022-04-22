@@ -92,8 +92,15 @@
                     event: $("<%=AstronomicalTriggerUtil.EVENT_PARAM%>").getValue(),
                     offset: $("<%=AstronomicalTriggerUtil.OFFSET_PARAM%>").getValue()
                 },
-                onSuccess: function() {
-                    console.log(arguments);
+                onSuccess: function(response) {
+                    let xmlDoc = $(response.responseXML.documentElement);
+                    let timeElements = xmlDoc.querySelectorAll("times *");
+
+                    for (let i = 0; i < timeElements.length; i ++) {
+                        // TODO: Show the upcoming trigger times in the UI
+                        console.log(timeElements[i].getAttribute("label"));
+                        console.log(timeElements[i].getAttribute("value"));
+                    }
                 }
             });
         }

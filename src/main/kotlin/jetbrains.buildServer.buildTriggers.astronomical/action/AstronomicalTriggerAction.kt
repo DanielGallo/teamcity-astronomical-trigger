@@ -3,9 +3,6 @@ package jetbrains.buildServer.buildTriggers.astronomical.action
 import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventQuery
 import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventResults
 import jetbrains.buildServer.buildTriggers.astronomical.controller.AstronomicalTriggerController
-import jetbrains.buildServer.web.openapi.ControllerAction
-import org.jdom.Content
-import org.jdom.Element
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import io.ktor.client.*
@@ -14,8 +11,12 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
+import jetbrains.buildServer.web.openapi.ControllerAction
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
+import kotlinx.datetime.*
+import kotlinx.serialization.json.*
+import org.jdom.Element
+import kotlin.reflect.KProperty1
 
 class AstronomicalTriggerAction(
     controller: AstronomicalTriggerController
@@ -25,18 +26,13 @@ class AstronomicalTriggerAction(
     }
 
     override fun canProcess(request: HttpServletRequest) =
-        request.method.toLowerCase() == "post"
+        request.method.lowercase() == "post"
 
     override fun process(
         request: HttpServletRequest,
         response: HttpServletResponse,
         ajaxResponse: Element?
     ) {
-        val el = Element("result")
-        ajaxResponse!!.addContent(el as Content)
-
-        el.setAttribute("success", "true")
-
         val query = AstronomicalEventQuery(
             latitude = request.getParameter("latitude").toDouble(),
             longitude = request.getParameter("longitude").toDouble(),
@@ -45,14 +41,41 @@ class AstronomicalTriggerAction(
         )
 
         // TODO: Maybe look for better alternative - should I avoid "runBlocking"?
-        el.setAttribute("result", runBlocking {
-            lookupTriggerTime(query).results.civil_twilight_begin.toString()
-        })
+        val eventResults: List<AstronomicalEventResults> = runBlocking {
+            lookupTriggerTime(query)
+        }
+
+        val el = Element("times")
+        ajaxResponse?.addContent(el)
+
+        for (item in eventResults) {
+            val eventTime = getDateTimeValue(item.results, query.event, query.offset)
+
+            val timeElement = Element("time")
+            timeElement.setAttribute("label", item.displayName)
+            timeElement.setAttribute("value", eventTime.toString())
+
+            el.addContent(timeElement)
+        }
     }
 
-    suspend fun lookupTriggerTime(
+    private fun getDateTimeValue(obj: Any, propertyName: String, offset: Number): LocalDateTime {
+        val property = obj::class.members.first {
+            it.name == propertyName
+        } as KProperty1<Any, *>
+
+        // Get the date/time value for the specified property
+        var value = property.get(obj) as Instant
+
+        // Add or subtract the offset (in minutes)
+        value = value.plus(offset.toInt(), DateTimeUnit.MINUTE, TimeZone.currentSystemDefault())
+
+        return value.toLocalDateTime(TimeZone.currentSystemDefault())
+    }
+
+    private suspend fun lookupTriggerTime(
         eventInstance: AstronomicalEventQuery
-    ): AstronomicalEventResults {
+    ): List<AstronomicalEventResults> {
         val client = HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
@@ -63,9 +86,12 @@ class AstronomicalTriggerAction(
             }
         }
 
-        val eventValues: AstronomicalEventResults = client.get("https://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=today&formatted=0").body()
+        val today: AstronomicalEventResults = client.get("https://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=today&formatted=0").body()
+        today.displayName = "Today"
 
-        return eventValues
-        //return response
+        val tomorrow: AstronomicalEventResults = client.get("https://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=tomorrow&formatted=0").body()
+        tomorrow.displayName = "Tomorrow"
+
+        return listOf(today, tomorrow)
     }
 }
