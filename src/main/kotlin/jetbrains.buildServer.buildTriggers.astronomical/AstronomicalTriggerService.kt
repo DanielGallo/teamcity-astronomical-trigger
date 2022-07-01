@@ -21,7 +21,7 @@ class AstronomicalTriggerService(
 ) : BuildTriggerService() {
 
     private val myPolicy = factory.createBuildTrigger(
-        AstronomicalTriggerPolicy(timeService),
+        AstronomicalTriggerPolicy(timeService, myAstronomicalTriggerManager),
         Logger.getInstance(AstronomicalTriggerService::class.qualifiedName)
     )
 
@@ -67,20 +67,47 @@ class AstronomicalTriggerService(
     }
 
     override fun describeTrigger(buildTriggerDescriptor: BuildTriggerDescriptor): String {
-        val properties = buildTriggerDescriptor.properties
-        val policyName = AstronomicalTriggerUtil.getTargetTriggerPolicyName(properties)
-            ?: return "Trigger policy is not selected"
+        val properties = buildTriggerDescriptor.properties;
+        val eventKey = properties["astronomical.trigger.event"];
+        val latitude = properties["astronomical.trigger.latitude"];
+        val longitude = properties["astronomical.trigger.longitude"];
+        val offset = properties["astronomical.trigger.offset"]?.toInt() ?: 0;
 
-        val projectId = buildTriggerDescriptor.properties["projectId"] ?: return "Project id cannot be determined"
-        val project = myProjectManager.findProjectByExternalId(projectId) ?: return "Project cannot be determined"
+        val events = mapOf(
+            "sunrise" to "Sunrise",
+            "sunset" to "Sunset",
+            "solar_noon" to "Solar Noon",
+            "civil_twilight_begin" to "Beginning of civil twilight",
+            "civil_twilight_end" to "Ending of civil twilight",
+            "nautical_twilight_begin" to "Beginning of nautical twilight",
+            "nautical_twilight_end" to "Ending of nautical twilight",
+            "astronomical_twilight_begin" to "Beginning of astronomical twilight",
+            "astronomical_twilight_end" to "Ending of astronomical twilight"
+        );
+        var eventName = events[eventKey];
 
-        val policyDescriptor = AstronomicalTriggerPolicyDescriptor(policyName, project)
+        // Include the offset in the plugin description
+        if (offset != 0) {
+            eventName = eventName?.lowercase()
+            var offsetString = offset.toString();
+            val suffix = if (offset < 0) "before" else "after";
 
-        val disabledStatus =
-            if (myAstronomicalTriggerManager.isTriggerPolicyEnabled(policyDescriptor)) ""
-            else "(disabled)"
+            // Remove the minus sign from the start of the negative number
+            if (offset < 0) {
+                offsetString = offsetString.substring(1);
+            }
 
-        return "Uses $policyName $disabledStatus"
+            eventName = "$offsetString minutes $suffix $eventName";
+        }
+
+        val nextTriggerTime = null;
+
+        val description = """
+            Event: $eventName
+            Location: $latitude, $longitude
+        """.trimIndent()
+
+        return description;
     }
 
     override fun getEditParametersUrl(): String {

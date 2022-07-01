@@ -75,6 +75,7 @@ teamcity {
 
         register("teamcity2021.2") {
             version = "2021.2.3"
+            serverOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010")
         }
     }
 }

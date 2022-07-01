@@ -79,13 +79,32 @@
     <td class="_label noBorder"></td>
     <td class="noBorder">
         <forms:button id="calculateTriggerTime" onclick="BS.AstronomicalTrigger.calculateTriggerTime(); return false;">Calculate next trigger time</forms:button>
+
+        <div id="calculateTriggerTimeResult" style="display: none; padding-top: 10px;">
+            <span class="title">Upcoming trigger times:</span>
+            <br>
+            <span class="result"></span>
+        </div>
     </td>
 </tr>
+
+<style>
+    #calculateTriggerTimeResult .title {
+        font-weight: bolder;
+    }
+
+    #calculateTriggerTimeResult .result {
+        font-size: 90%;
+    }
+</style>
 
 <script>
     BS.AstronomicalTrigger = {
         calculateTriggerTime: function() {
-            BS.ajaxRequest(window['base_uri'] + "/checkAstronomicalTriggerTime.html", {
+            let resultContainer = $j("#calculateTriggerTimeResult");
+            resultContainer.hide();
+
+            BS.ajaxRequest(window["base_uri"] + "/checkAstronomicalTriggerTime.html", {
                 parameters: {
                     latitude: $("<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>").getValue(),
                     longitude: $("<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>").getValue(),
@@ -95,12 +114,20 @@
                 onSuccess: function(response) {
                     let xmlDoc = $(response.responseXML.documentElement);
                     let timeElements = xmlDoc.querySelectorAll("times *");
+                    let resultContainer = $j("#calculateTriggerTimeResult");
+                    let resultElement = $j("#calculateTriggerTimeResult span.result");
+                    let html = '';
 
                     for (let i = 0; i < timeElements.length; i ++) {
-                        // TODO: Show the upcoming trigger times in the UI
-                        console.log(timeElements[i].getAttribute("label"));
-                        console.log(timeElements[i].getAttribute("value"));
+                        let date = new Date(timeElements[i].getAttribute("value"));
+                        let label = timeElements[i].getAttribute("label");
+                        let value = date.toString();
+
+                        html += `\${label}: \${value}<br>`;
                     }
+
+                    resultElement.html(html);
+                    resultContainer.show();
                 }
             });
         }
