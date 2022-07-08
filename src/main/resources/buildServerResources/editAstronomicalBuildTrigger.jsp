@@ -23,7 +23,7 @@
         <label for="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>">Latitude:<l:star/></label>
     </td>
     <td class="noBorder">
-        <props:textProperty name="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>"/>
+        <props:textProperty name="<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>" onchange="BS.AstronomicalTrigger.valuesChanged()" />
         <span class="error" id="error_<%=AstronomicalTriggerUtil.LATITUDE_PARAM%>"></span>
     </td>
 </tr>
@@ -32,7 +32,7 @@
         <label for="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>">Longitude:<l:star/></label>
     </td>
     <td class="noBorder">
-        <props:textProperty name="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>"/>
+        <props:textProperty name="<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>" onchange="BS.AstronomicalTrigger.valuesChanged()" />
         <span class="error" id="error_<%=AstronomicalTriggerUtil.LONGITUDE_PARAM%>"></span>
     </td>
 </tr>
@@ -44,7 +44,7 @@
         <label for="<%=AstronomicalTriggerUtil.EVENT_PARAM%>">Event:<l:star/></label>
     </td>
     <td class="noBorder">
-        <props:selectProperty name="<%=AstronomicalTriggerUtil.EVENT_PARAM%>" enableFilter="true">
+        <props:selectProperty name="<%=AstronomicalTriggerUtil.EVENT_PARAM%>" enableFilter="true" onchange="BS.AstronomicalTrigger.valuesChanged()">
             <props:option value="sunrise">Sunrise</props:option>
             <props:option value="sunset">Sunset</props:option>
             <props:option value="solar_noon">Solar Noon</props:option>
@@ -62,7 +62,7 @@
         <label for="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">Offset:<l:star/></label>
     </td>
     <td class="noBorder">
-        <props:selectProperty name="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">
+        <props:selectProperty name="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>" onchange="BS.AstronomicalTrigger.valuesChanged()">
             <c:forEach begin="0" end="55" step="5" varStatus="pos">
                 <props:option value="${pos.index-60}">${pos.index-60} minutes</props:option>
             </c:forEach>
@@ -100,6 +100,11 @@
 
 <script>
     BS.AstronomicalTrigger = {
+        valuesChanged: function() {
+            let resultContainer = $j("#calculateTriggerTimeResult");
+            resultContainer.hide();
+        },
+
         calculateTriggerTime: function() {
             let resultContainer = $j("#calculateTriggerTimeResult");
             resultContainer.hide();
@@ -118,12 +123,15 @@
                     let resultElement = $j("#calculateTriggerTimeResult span.result");
                     let html = '';
 
-                    for (let i = 0; i < timeElements.length; i ++) {
-                        let date = new Date(timeElements[i].getAttribute("value"));
-                        let label = timeElements[i].getAttribute("label");
-                        let value = date.toString();
+                    if (timeElements.length > 0) {
+                        for (let i = 0; i < timeElements.length; i ++) {
+                            let date = new Date(timeElements[i].getAttribute("value"));
+                            let value = date.toString();
 
-                        html += `\${label}: \${value}<br>`;
+                            html += `\${value}<br>`;
+                        }
+                    } else {
+                        html += "There are no upcoming events matching the specified criteria.";
                     }
 
                     resultElement.html(html);

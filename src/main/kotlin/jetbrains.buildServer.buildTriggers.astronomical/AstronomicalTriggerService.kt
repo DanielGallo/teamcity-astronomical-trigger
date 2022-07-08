@@ -7,21 +7,22 @@ import jetbrains.buildServer.buildTriggers.async.AsyncPolledBuildTriggerFactory
 import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.ProjectManager
 import jetbrains.buildServer.serverSide.PropertiesProcessor
+import jetbrains.buildServer.serverSide.identifiers.BuildTypeIdentifiersManager
 import jetbrains.buildServer.util.TimeService
 import jetbrains.buildServer.web.openapi.PluginDescriptor
 import org.springframework.stereotype.Service
+import kotlinx.datetime.*
 
 @Service
 class AstronomicalTriggerService(
     factory: AsyncPolledBuildTriggerFactory,
-    timeService: TimeService,
     private val myPluginDescriptor: PluginDescriptor,
     private val myProjectManager: ProjectManager,
-    private val myAstronomicalTriggerManager: AstronomicalTriggerManager
+    private val myBuildTypeManager: BuildTypeIdentifiersManager
 ) : BuildTriggerService() {
 
     private val myPolicy = factory.createBuildTrigger(
-        AstronomicalTriggerPolicy(timeService, myAstronomicalTriggerManager),
+        AstronomicalTriggerPolicy(),
         Logger.getInstance(AstronomicalTriggerService::class.qualifiedName)
     )
 
@@ -67,44 +68,56 @@ class AstronomicalTriggerService(
     }
 
     override fun describeTrigger(buildTriggerDescriptor: BuildTriggerDescriptor): String {
-        val properties = buildTriggerDescriptor.properties;
-        val eventKey = properties["astronomical.trigger.event"];
-        val latitude = properties["astronomical.trigger.latitude"];
-        val longitude = properties["astronomical.trigger.longitude"];
-        val offset = properties["astronomical.trigger.offset"]?.toInt() ?: 0;
+        val properties = buildTriggerDescriptor.properties
+        val eventKey = properties[AstronomicalTriggerUtil.EVENT_PARAM]
+        val latitude = properties[AstronomicalTriggerUtil.LATITUDE_PARAM]
+        val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]
+        var offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
+
+        //val className = this.javaClass.kotlin.qualifiedName
+        //val customDataStorage = myProjectManager.rootProject.getCustomDataStorage(className + "_" + buildTriggerDescriptor.id)
+        //val nextTriggerTime: LocalDateTime? = customDataStorage.getValue("nextTriggerTime")?.toLocalDateTime()
+
+        var triggerTimeDescription = ""
 
         val events = mapOf(
-            "sunrise" to "Sunrise",
-            "sunset" to "Sunset",
-            "solar_noon" to "Solar Noon",
-            "civil_twilight_begin" to "Beginning of civil twilight",
-            "civil_twilight_end" to "Ending of civil twilight",
-            "nautical_twilight_begin" to "Beginning of nautical twilight",
-            "nautical_twilight_end" to "Ending of nautical twilight",
-            "astronomical_twilight_begin" to "Beginning of astronomical twilight",
-            "astronomical_twilight_end" to "Ending of astronomical twilight"
+            "sunrise" to "sunrise",
+            "sunset" to "sunset",
+            "solar_noon" to "solar noon",
+            "civil_twilight_begin" to "the start of civil twilight",
+            "civil_twilight_end" to "the end of civil twilight",
+            "nautical_twilight_begin" to "the start of nautical twilight",
+            "nautical_twilight_end" to "the end of nautical twilight",
+            "astronomical_twilight_begin" to "the start of astronomical twilight",
+            "astronomical_twilight_end" to "the end of astronomical twilight"
         );
         var eventName = events[eventKey];
 
         // Include the offset in the plugin description
         if (offset != 0) {
-            eventName = eventName?.lowercase()
-            var offsetString = offset.toString();
             val suffix = if (offset < 0) "before" else "after";
 
             // Remove the minus sign from the start of the negative number
             if (offset < 0) {
-                offsetString = offsetString.substring(1);
+                offset *= -1
             }
 
-            eventName = "$offsetString minutes $suffix $eventName";
+            eventName = "$offset minutes $suffix $eventName";
+        } else {
+            eventName = "at $eventName"
         }
 
-        val nextTriggerTime = null;
+        eventName = "Daily, $eventName"
+
+        //if (nextTriggerTime != null) {
+        //    val formattedDate = nextTriggerTime.toString()
+        //    triggerTimeDescription = "Next trigger time: $formattedDate"
+        //}
 
         val description = """
             Event: $eventName
             Location: $latitude, $longitude
+            $triggerTimeDescription
         """.trimIndent()
 
         return description;
@@ -115,5 +128,6 @@ class AstronomicalTriggerService(
     }
 
     override fun getBuildTriggeringPolicy() = myPolicy
+
     override fun isMultipleTriggersPerBuildTypeAllowed() = true
 }
