@@ -41,9 +41,7 @@ dependencies {
     provided("org.jetbrains.teamcity.internal:server:${teamcityVersion}")
     provided("org.jetbrains.teamcity.internal:web:${teamcityVersion}")
 
-    testImplementation("org.assertj:assertj-core:1.7.1")
-    testImplementation("org.testng:testng:6.8")
-    testImplementation("io.mockk:mockk:1.10.0")
+    testImplementation(kotlin("test"))
 }
 
 tasks {
@@ -53,6 +51,10 @@ tasks {
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 teamcity {

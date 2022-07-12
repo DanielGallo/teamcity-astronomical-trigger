@@ -3,6 +3,8 @@ package jetbrains.buildServer.buildTriggers.astronomical
 import com.intellij.openapi.diagnostic.Logger
 import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor
 import jetbrains.buildServer.buildTriggers.BuildTriggerService
+import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventQuery
+import jetbrains.buildServer.buildTriggers.astronomical.helper.AstronomicalEvent
 import jetbrains.buildServer.buildTriggers.async.AsyncPolledBuildTriggerFactory
 import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.ProjectManager
@@ -64,34 +66,36 @@ class AstronomicalTriggerService(
             }
         }
 
+        val offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]
+        if (offset.isNullOrEmpty()) {
+            errors.add(InvalidProperty(AstronomicalTriggerUtil.OFFSET_PARAM, "Offset is required"))
+        } else {
+            val offsetNum = offset.toIntOrNull()
+
+            if (offsetNum == null) {
+                errors.add(InvalidProperty(AstronomicalTriggerUtil.OFFSET_PARAM, "Offset needs to be either a positive or negative whole number"))
+            }
+        }
+
         errors
     }
 
     override fun describeTrigger(buildTriggerDescriptor: BuildTriggerDescriptor): String {
         val properties = buildTriggerDescriptor.properties
-        val eventKey = properties[AstronomicalTriggerUtil.EVENT_PARAM]
-        val latitude = properties[AstronomicalTriggerUtil.LATITUDE_PARAM]
-        val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]
+        val eventKey = properties[AstronomicalTriggerUtil.EVENT_PARAM].toString()
+        val latitude = properties[AstronomicalTriggerUtil.LATITUDE_PARAM]?.toDouble() ?: 0
+        val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0
         var offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
 
         //val className = this.javaClass.kotlin.qualifiedName
         //val customDataStorage = myProjectManager.rootProject.getCustomDataStorage(className + "_" + buildTriggerDescriptor.id)
-        //val nextTriggerTime: LocalDateTime? = customDataStorage.getValue("nextTriggerTime")?.toLocalDateTime()
+
+        //val event = AstronomicalEventQuery(latitude, longitude, eventKey, offset)
+        //val nextTriggerTime: LocalDateTime? = AstronomicalEvent.getNextTriggerTime(event)
 
         var triggerTimeDescription = ""
 
-        val events = mapOf(
-            "sunrise" to "sunrise",
-            "sunset" to "sunset",
-            "solar_noon" to "solar noon",
-            "civil_twilight_begin" to "the start of civil twilight",
-            "civil_twilight_end" to "the end of civil twilight",
-            "nautical_twilight_begin" to "the start of nautical twilight",
-            "nautical_twilight_end" to "the end of nautical twilight",
-            "astronomical_twilight_begin" to "the start of astronomical twilight",
-            "astronomical_twilight_end" to "the end of astronomical twilight"
-        );
-        var eventName = events[eventKey];
+        var eventName = AstronomicalEvent.getEventNameFromKey(eventKey);
 
         // Include the offset in the plugin description
         if (offset != 0) {

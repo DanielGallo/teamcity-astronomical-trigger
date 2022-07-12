@@ -19,15 +19,16 @@ object AstronomicalEvent {
      * Gets the next trigger time for storing locally.
      * This is typically called once per day, when the previous trigger time has passed (or there's no stored trigger time).
      */
-    fun getNextTriggerTime(query: AstronomicalEventQuery): LocalDateTime {
+    fun getNextTriggerTime(query: AstronomicalEventQuery): LocalDateTime? {
         val events = fetchUpcomingTriggerTimes(query)
-        var nextTriggerTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        var nextTriggerTime: LocalDateTime? = null
 
         for (event in events) {
-            val diff = event.value.compareTo(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()))
+            val diff = event.value.compareTo(Clock.System.now().toLocalDateTime(TimeZone.UTC))
 
             if (diff > 0) {
                 nextTriggerTime = event.value
+                break
             }
         }
 
@@ -43,7 +44,7 @@ object AstronomicalEvent {
         val triggerTimes = mutableListOf<AstronomicalEventResult>()
 
         for (event in events) {
-            val diff = event.value.compareTo(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()))
+            val diff = event.value.compareTo(Clock.System.now().toLocalDateTime(TimeZone.UTC))
 
             if (diff > 0) {
                 triggerTimes.add(event)
@@ -51,6 +52,22 @@ object AstronomicalEvent {
         }
 
         return triggerTimes
+    }
+
+    fun getEventNameFromKey(eventKey: String): String {
+        val events = mapOf(
+            "sunrise" to "sunrise",
+            "sunset" to "sunset",
+            "solar_noon" to "solar noon",
+            "civil_twilight_begin" to "the start of civil twilight",
+            "civil_twilight_end" to "the end of civil twilight",
+            "nautical_twilight_begin" to "the start of nautical twilight",
+            "nautical_twilight_end" to "the end of nautical twilight",
+            "astronomical_twilight_begin" to "the start of astronomical twilight",
+            "astronomical_twilight_end" to "the end of astronomical twilight"
+        );
+
+        return events[eventKey].toString();
     }
 
     private fun fetchUpcomingTriggerTimes(query: AstronomicalEventQuery): List<AstronomicalEventResult> {
@@ -77,9 +94,9 @@ object AstronomicalEvent {
         var value = property.get(obj) as Instant
 
         // Add or subtract the offset (in minutes)
-        value = value.plus(offset.toInt(), DateTimeUnit.MINUTE, TimeZone.currentSystemDefault())
+        value = value.plus(offset.toInt(), DateTimeUnit.MINUTE, TimeZone.UTC)
 
-        return value.toLocalDateTime(TimeZone.currentSystemDefault())
+        return value.toLocalDateTime(TimeZone.UTC)
     }
 
     private suspend fun getTriggerTimes(

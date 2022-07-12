@@ -59,20 +59,13 @@
 </tr>
 <tr class="noBorder">
     <td class="_label noBorder" style="vertical-align: top;">
-        <label for="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">Offset:<l:star/></label>
+        <label for="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>">Offset (minutes):<l:star/></label>
     </td>
     <td class="noBorder">
-        <props:selectProperty name="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>" onchange="BS.AstronomicalTrigger.valuesChanged()">
-            <c:forEach begin="0" end="55" step="5" varStatus="pos">
-                <props:option value="${pos.index-60}">${pos.index-60} minutes</props:option>
-            </c:forEach>
-            <props:option value="0">0 minutes</props:option>
-            <c:forEach begin="5" end="60" step="5" varStatus="pos">
-                <props:option value="${pos.index}">+${pos.index} minutes</props:option>
-            </c:forEach>
-        </props:selectProperty>
-        <span class="smallNote">Selecting a custom offset will allow the triggering of the build up to
-            60 minutes before or after the selected astronomical event.</span>
+        <props:textProperty name="<%=AstronomicalTriggerUtil.OFFSET_PARAM%>" onchange="BS.AstronomicalTrigger.valuesChanged()" />
+        <span class="error" id="error_<%=AstronomicalTriggerUtil.OFFSET_PARAM%>"></span>
+        <span class="smallNote">Defining a positive or negative offset will allow the triggering of the build a specified
+            number of minutes before or after the selected astronomical event.</span>
     </td>
 </tr>
 <tr class="noBorder">
@@ -125,10 +118,34 @@
 
                     if (timeElements.length > 0) {
                         for (let i = 0; i < timeElements.length; i ++) {
-                            let date = new Date(timeElements[i].getAttribute("value"));
-                            let value = date.toString();
+                            let date = new Date(timeElements[i].getAttribute("value") + "Z");
+                            let value = date.toLocaleString(Intl.DateTimeFormat().resolvedOptions().locale, {
+                                timeZone: 'UTC',
+                                timeZoneName: 'short',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                                hour12: false
+                            });
 
-                            html += `\${value}<br>`;
+                            html += `\${value}`;
+
+                            value = date.toLocaleString(Intl.DateTimeFormat().resolvedOptions().locale, {
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                timeZoneName: 'short',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                                hour12: false
+                            });
+
+                            html += ` (\${value})<br/>`;
                         }
                     } else {
                         html += "There are no upcoming events matching the specified criteria.";

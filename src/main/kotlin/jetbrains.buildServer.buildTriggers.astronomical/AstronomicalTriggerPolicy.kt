@@ -19,10 +19,10 @@ class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
         var message = ""
 
         val query = AstronomicalEventQuery(
-            triggerProperties.get(AstronomicalTriggerUtil.LATITUDE_PARAM)?.toDouble() ?: 0,
-            triggerProperties.get(AstronomicalTriggerUtil.LONGITUDE_PARAM)?.toDouble() ?: 0,
-            triggerProperties.get(AstronomicalTriggerUtil.EVENT_PARAM).toString(),
-            triggerProperties.get(AstronomicalTriggerUtil.OFFSET_PARAM)?.toInt() ?: 0
+            triggerProperties[AstronomicalTriggerUtil.LATITUDE_PARAM]?.toDouble() ?: 0,
+            triggerProperties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0,
+            triggerProperties[AstronomicalTriggerUtil.EVENT_PARAM].toString(),
+            triggerProperties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
         )
 
         val newParamsHash = Utils.generateHash(query)
@@ -41,8 +41,8 @@ class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
 
         if (buildType.isInQueue || buildType.runningBuilds.isNotEmpty()) {
             message = "Existing build in queue"
-        } else if (triggerTimePassed(nextTriggerTime)) {
-            buildType.addToQueue("Astronomical event")
+        } else if (nextTriggerTime != null && triggerTimePassed(nextTriggerTime)) {
+            buildType.addToQueue("Astronomical event at $nextTriggerTime")
             customDataStorage.putValue("nextTriggerTime", null)
             message = "Add new build to queue"
         }
@@ -51,7 +51,7 @@ class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
     }
 
     private fun triggerTimePassed(nextTriggerTime: LocalDateTime): Boolean {
-        val diff = nextTriggerTime.compareTo(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()))
+        val diff = nextTriggerTime.compareTo(Clock.System.now().toLocalDateTime(TimeZone.UTC))
 
         return diff <= 0
     }
