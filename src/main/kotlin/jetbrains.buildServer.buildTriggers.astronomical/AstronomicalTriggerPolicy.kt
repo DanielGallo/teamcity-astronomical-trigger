@@ -39,6 +39,10 @@ class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
             nextTriggerTime = storedTriggerTime.toLocalDateTime()
         }
 
+        if (nextTriggerTime != null) {
+            AstronomicalEvent.triggerTimes[newParamsHash] = nextTriggerTime;
+        }
+
         if (buildType.isInQueue || buildType.runningBuilds.isNotEmpty()) {
             message = "Existing build in queue"
         } else if (nextTriggerTime != null && triggerTimePassed(nextTriggerTime)) {

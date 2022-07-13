@@ -1,11 +1,11 @@
 import com.github.jk1.license.render.JsonReportRenderer
 
 plugins {
-    kotlin("jvm") version "1.6.20"
-    kotlin("plugin.serialization") version "1.6.20"
+    kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
     id("com.github.rodm.teamcity-server") version "1.4.1"
     id("com.github.rodm.teamcity-environments") version "1.4.1"
-    id ("com.github.jk1.dependency-license-report") version "1.17"
+    id("com.github.jk1.dependency-license-report") version "1.17"
 }
 
 group = "org.jetbrains.teamcity"
@@ -46,10 +46,10 @@ dependencies {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "11"
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "11"
     }
 }
 
@@ -77,6 +77,7 @@ teamcity {
 
         register("teamcity2021.2") {
             version = "2021.2.3"
+            javaHome = "/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home"
             serverOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010")
         }
     }

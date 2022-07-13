@@ -12,9 +12,16 @@ import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventRe
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.*
 import kotlinx.serialization.json.Json
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KProperty1
 
 object AstronomicalEvent {
+    /**
+     * Cached set of Trigger times, for displaying within the Trigger description.
+     * The key consists of a hash value provided by [Utils.generateHash].
+     */
+    val triggerTimes = ConcurrentHashMap<String, LocalDateTime>();
+
     /**
      * Gets the next trigger time for storing locally.
      * This is typically called once per day, when the previous trigger time has passed (or there's no stored trigger time).

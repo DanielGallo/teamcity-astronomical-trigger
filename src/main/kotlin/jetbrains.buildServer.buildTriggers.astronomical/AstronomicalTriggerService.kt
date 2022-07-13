@@ -5,22 +5,22 @@ import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor
 import jetbrains.buildServer.buildTriggers.BuildTriggerService
 import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventQuery
 import jetbrains.buildServer.buildTriggers.astronomical.helper.AstronomicalEvent
+import jetbrains.buildServer.buildTriggers.astronomical.helper.Utils
 import jetbrains.buildServer.buildTriggers.async.AsyncPolledBuildTriggerFactory
 import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.ProjectManager
 import jetbrains.buildServer.serverSide.PropertiesProcessor
 import jetbrains.buildServer.serverSide.identifiers.BuildTypeIdentifiersManager
-import jetbrains.buildServer.util.TimeService
 import jetbrains.buildServer.web.openapi.PluginDescriptor
 import org.springframework.stereotype.Service
 import kotlinx.datetime.*
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Service
 class AstronomicalTriggerService(
     factory: AsyncPolledBuildTriggerFactory,
-    private val myPluginDescriptor: PluginDescriptor,
-    private val myProjectManager: ProjectManager,
-    private val myBuildTypeManager: BuildTypeIdentifiersManager
+    private val myPluginDescriptor: PluginDescriptor
 ) : BuildTriggerService() {
 
     private val myPolicy = factory.createBuildTrigger(
@@ -87,11 +87,16 @@ class AstronomicalTriggerService(
         val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0
         var offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
 
-        //val className = this.javaClass.kotlin.qualifiedName
-        //val customDataStorage = myProjectManager.rootProject.getCustomDataStorage(className + "_" + buildTriggerDescriptor.id)
+        val query = AstronomicalEventQuery(
+            properties[AstronomicalTriggerUtil.LATITUDE_PARAM]?.toDouble() ?: 0,
+            properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0,
+            properties[AstronomicalTriggerUtil.EVENT_PARAM].toString(),
+            properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
+        )
 
-        //val event = AstronomicalEventQuery(latitude, longitude, eventKey, offset)
-        //val nextTriggerTime: LocalDateTime? = AstronomicalEvent.getNextTriggerTime(event)
+        val paramsHash = Utils.generateHash(query)
+
+        val nextTriggerTime: LocalDateTime? = AstronomicalEvent.triggerTimes[paramsHash];
 
         var triggerTimeDescription = ""
 
@@ -113,10 +118,16 @@ class AstronomicalTriggerService(
 
         eventName = "Daily, $eventName"
 
-        //if (nextTriggerTime != null) {
-        //    val formattedDate = nextTriggerTime.toString()
-        //    triggerTimeDescription = "Next trigger time: $formattedDate"
-        //}
+        if (nextTriggerTime != null) {
+            val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm:ss z")
+            val dateTimeUTC = nextTriggerTime.toJavaLocalDateTime().atZone(ZoneId.of("UTC"))
+            val dateTimeLocal = dateTimeUTC.withZoneSameInstant(ZoneId.systemDefault())
+
+            val formattedDateTimeUTC = formatter.format(dateTimeUTC)
+            val formattedDateTimeLocal = formatter.format(dateTimeLocal)
+
+            triggerTimeDescription = "Next trigger time: $formattedDateTimeUTC ($formattedDateTimeLocal)"
+        }
 
         val description = """
             Event: $eventName
