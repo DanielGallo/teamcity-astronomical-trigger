@@ -8,9 +8,7 @@ import jetbrains.buildServer.buildTriggers.astronomical.helper.AstronomicalEvent
 import jetbrains.buildServer.buildTriggers.astronomical.helper.Utils
 import jetbrains.buildServer.buildTriggers.async.AsyncPolledBuildTriggerFactory
 import jetbrains.buildServer.serverSide.InvalidProperty
-import jetbrains.buildServer.serverSide.ProjectManager
 import jetbrains.buildServer.serverSide.PropertiesProcessor
-import jetbrains.buildServer.serverSide.identifiers.BuildTypeIdentifiersManager
 import jetbrains.buildServer.web.openapi.PluginDescriptor
 import org.springframework.stereotype.Service
 import kotlinx.datetime.*
@@ -85,57 +83,45 @@ class AstronomicalTriggerService(
         val eventKey = properties[AstronomicalTriggerUtil.EVENT_PARAM].toString()
         val latitude = properties[AstronomicalTriggerUtil.LATITUDE_PARAM]?.toDouble() ?: 0
         val longitude = properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0
-        var offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
+        val offset = properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
+        var triggerTimeDescription = ""
 
         val query = AstronomicalEventQuery(
-            properties[AstronomicalTriggerUtil.LATITUDE_PARAM]?.toDouble() ?: 0,
-            properties[AstronomicalTriggerUtil.LONGITUDE_PARAM]?.toDouble() ?: 0,
-            properties[AstronomicalTriggerUtil.EVENT_PARAM].toString(),
-            properties[AstronomicalTriggerUtil.OFFSET_PARAM]?.toInt() ?: 0
+            latitude,
+            longitude,
+            eventKey,
+            offset
         )
 
         val paramsHash = Utils.generateHash(query)
+        val nextTriggerTime: LocalDateTime? = AstronomicalEvent.triggerTimes[paramsHash]
 
-        val nextTriggerTime: LocalDateTime? = AstronomicalEvent.triggerTimes[paramsHash];
-
-        var triggerTimeDescription = ""
-
-        var eventName = AstronomicalEvent.getEventNameFromKey(eventKey);
-
-        // Include the offset in the plugin description
-        if (offset != 0) {
-            val suffix = if (offset < 0) "before" else "after";
-
-            // Remove the minus sign from the start of the negative number
-            if (offset < 0) {
-                offset *= -1
-            }
-
-            eventName = "$offset minutes $suffix $eventName";
-        } else {
-            eventName = "at $eventName"
-        }
-
+        var eventName = AstronomicalEvent.generateEventDescription(query)
         eventName = "Daily, $eventName"
 
+        // If there's a cached trigger time, show it in the trigger description
         if (nextTriggerTime != null) {
+            // The date/time returned from the Sunrise-Sunset API is in UTC format
+            // Use a formatter to show the full date and time as both a UTC and local server time
             val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm:ss z")
             val dateTimeUTC = nextTriggerTime.toJavaLocalDateTime().atZone(ZoneId.of("UTC"))
             val dateTimeLocal = dateTimeUTC.withZoneSameInstant(ZoneId.systemDefault())
-
             val formattedDateTimeUTC = formatter.format(dateTimeUTC)
             val formattedDateTimeLocal = formatter.format(dateTimeLocal)
 
-            triggerTimeDescription = "Next trigger time: $formattedDateTimeUTC ($formattedDateTimeLocal)"
+            triggerTimeDescription = "$formattedDateTimeUTC ($formattedDateTimeLocal)"
+        } else {
+            // If there's no cached trigger time yet, show a "fetching..." message
+            triggerTimeDescription = "Fetching..."
         }
 
         val description = """
             Event: $eventName
             Location: $latitude, $longitude
-            $triggerTimeDescription
+            Next trigger time: $triggerTimeDescription
         """.trimIndent()
 
-        return description;
+        return description
     }
 
     override fun getEditParametersUrl(): String {

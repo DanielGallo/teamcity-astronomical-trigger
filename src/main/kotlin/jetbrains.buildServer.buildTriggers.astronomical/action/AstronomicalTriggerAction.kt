@@ -1,23 +1,13 @@
 package jetbrains.buildServer.buildTriggers.astronomical.action
 
 import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventQuery
-import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventResults
 import jetbrains.buildServer.buildTriggers.astronomical.controller.AstronomicalTriggerController
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.serialization.kotlinx.json.*
 import jetbrains.buildServer.buildTriggers.astronomical.helper.AstronomicalEvent
+import jetbrains.buildServer.buildTriggers.astronomical.helper.Utils
 import jetbrains.buildServer.web.openapi.ControllerAction
-import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.*
-import kotlinx.serialization.json.*
 import org.jdom.Element
-import kotlin.reflect.KProperty1
 
 class AstronomicalTriggerAction(
     controller: AstronomicalTriggerController
@@ -27,7 +17,7 @@ class AstronomicalTriggerAction(
     }
 
     override fun canProcess(request: HttpServletRequest) =
-        request.method.lowercase() == "post"
+        request.method.lowercase() == "post" && request.requestURI.contains("checkAstronomicalTriggerTime.html")
 
     override fun process(
         request: HttpServletRequest,
@@ -42,6 +32,13 @@ class AstronomicalTriggerAction(
         )
 
         val eventResults = AstronomicalEvent.getUpcomingTriggerTimes(query)
+
+        // There may be no event results - for example, at high latitudes there may be
+        // no sunrise or sunset times during summer months.
+        if (eventResults.isNotEmpty()) {
+            val paramsHash = Utils.generateHash(query)
+            AstronomicalEvent.triggerTimes[paramsHash] = eventResults[0].value
+        }
 
         val el = Element("times")
         ajaxResponse?.addContent(el)

@@ -4,6 +4,9 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.serializers.InstantIso8601Serializer
 import kotlinx.serialization.Serializable
 
+/**
+ * Data type that matches the response object received from the Sunrise-Sunset API.
+ */
 @Serializable
 data class AstronomicalEventValues(
     @Serializable(with = InstantIso8601Serializer::class)

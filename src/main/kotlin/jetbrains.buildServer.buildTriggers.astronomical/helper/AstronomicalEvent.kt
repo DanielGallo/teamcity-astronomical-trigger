@@ -20,7 +20,7 @@ object AstronomicalEvent {
      * Cached set of Trigger times, for displaying within the Trigger description.
      * The key consists of a hash value provided by [Utils.generateHash].
      */
-    val triggerTimes = ConcurrentHashMap<String, LocalDateTime>();
+    val triggerTimes = ConcurrentHashMap<String, LocalDateTime>()
 
     /**
      * Gets the next trigger time for storing locally.
@@ -61,6 +61,39 @@ object AstronomicalEvent {
         return triggerTimes
     }
 
+    /**
+     * Generates a full description of the astronomical event, based on the event type and offset
+     * e.g. "5 minutes before the start of astronomical twilight"
+     * @param query The query object containing the event key and offset
+     * @return The description of the astronomical event
+     */
+    fun generateEventDescription(query: AstronomicalEventQuery): String {
+        var eventName = getEventNameFromKey(query.event)
+        var offset: Int = query.offset.toInt()
+
+        // Include the offset in the plugin description
+        if (offset != 0) {
+            val suffix = if (offset < 0) "before" else "after"
+
+            // Remove the minus sign from the start of the negative number
+            if (offset < 0) {
+                offset *= -1
+            }
+
+            eventName = "$offset minutes $suffix $eventName"
+        } else {
+            eventName = "at $eventName"
+        }
+
+        return eventName
+    }
+
+    /**
+     * Converts the event key (e.g. "civil_twilight_begin") to a display-friendly version
+     * (e.g. "the start of civil twilight")
+     * @param eventKey The event key to convert to a display-friendly version
+     * @return The display-friendly version of the astronomical event name
+     */
     fun getEventNameFromKey(eventKey: String): String {
         val events = mapOf(
             "sunrise" to "sunrise",
@@ -72,9 +105,9 @@ object AstronomicalEvent {
             "nautical_twilight_end" to "the end of nautical twilight",
             "astronomical_twilight_begin" to "the start of astronomical twilight",
             "astronomical_twilight_end" to "the end of astronomical twilight"
-        );
+        )
 
-        return events[eventKey].toString();
+        return events[eventKey].toString()
     }
 
     private fun fetchUpcomingTriggerTimes(query: AstronomicalEventQuery): List<AstronomicalEventResult> {
@@ -106,6 +139,14 @@ object AstronomicalEvent {
         return value.toLocalDateTime(TimeZone.UTC)
     }
 
+    /**
+     * Calls the external Sunrise-Sunset API to fetch the upcoming event times based on the defined
+     * criteria within the astronomical event query object.
+     * The external API is called twice - once for today, and once for tomorrow, as the event for
+     * today may have already passed.
+     * @param eventInstance The query object containing the latitude and longitude
+     * @return List of astronomical event results (either 1 or 2 results)
+     */
     private suspend fun getTriggerTimes(
         eventInstance: AstronomicalEventQuery
     ): List<AstronomicalEventResults> {

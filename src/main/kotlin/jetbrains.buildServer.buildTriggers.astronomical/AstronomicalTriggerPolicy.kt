@@ -5,17 +5,16 @@ import jetbrains.buildServer.buildTriggers.astronomical.data.AstronomicalEventQu
 import jetbrains.buildServer.buildTriggers.astronomical.helper.AstronomicalEvent
 import jetbrains.buildServer.buildTriggers.astronomical.helper.Utils
 import jetbrains.buildServer.buildTriggers.async.BaseAsyncPolledBuildTrigger
-import jetbrains.buildServer.util.TimeService
 import kotlinx.datetime.*
 
 class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
-    override fun triggerBuild(prev: String?, context: PolledTriggerContext): String? {
+    override fun triggerBuild(prev: String?, context: PolledTriggerContext): String {
         val buildType = context.buildType
         val customDataStorage = AstronomicalTriggerUtil.getCustomDataStorageOfTrigger(context)
         val triggerProperties = context.triggerDescriptor.properties
         val storedTriggerTime = customDataStorage.getValue("nextTriggerTime")
         val storedParamsHash = customDataStorage.getValue("paramsHash")
-        var nextTriggerTime: LocalDateTime? = null
+        var nextTriggerTime: LocalDateTime?
         var message = ""
 
         val query = AstronomicalEventQuery(
@@ -40,20 +39,27 @@ class AstronomicalTriggerPolicy : BaseAsyncPolledBuildTrigger() {
         }
 
         if (nextTriggerTime != null) {
-            AstronomicalEvent.triggerTimes[newParamsHash] = nextTriggerTime;
+            AstronomicalEvent.triggerTimes[newParamsHash] = nextTriggerTime
         }
 
         if (buildType.isInQueue || buildType.runningBuilds.isNotEmpty()) {
             message = "Existing build in queue"
         } else if (nextTriggerTime != null && triggerTimePassed(nextTriggerTime)) {
-            buildType.addToQueue("Astronomical event at $nextTriggerTime")
+            val eventName = AstronomicalEvent.generateEventDescription(query)
+
+            buildType.addToQueue("Astronomical event — $eventName")
             customDataStorage.putValue("nextTriggerTime", null)
             message = "Add new build to queue"
         }
 
-        return message;
+        return message
     }
 
+    /**
+     * Checks whether the specified trigger time has already passed.
+     * @param nextTriggerTime The trigger time to check (in UTC).
+     * @return Boolean value indicating whether the trigger time has passed.
+     */
     private fun triggerTimePassed(nextTriggerTime: LocalDateTime): Boolean {
         val diff = nextTriggerTime.compareTo(Clock.System.now().toLocalDateTime(TimeZone.UTC))
 

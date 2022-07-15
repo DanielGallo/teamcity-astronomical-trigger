@@ -13,5 +13,4 @@ class AstronomicalTriggerController(
     init {
         myWebControllerManager.registerController(PluginConstants.TEST_TRIGGER_URL, this)
     }
-
 }
