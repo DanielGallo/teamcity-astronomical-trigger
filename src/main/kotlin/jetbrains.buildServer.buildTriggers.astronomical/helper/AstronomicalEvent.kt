@@ -160,10 +160,11 @@ object AstronomicalEvent {
             }
         }
 
-        val today: AstronomicalEventResults = client.get("https://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=today&formatted=0").body()
+        // Temporarily disabled use of HTTPS as their certificate expired and hasn't been renewed yet
+        val today: AstronomicalEventResults = client.get("http://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=today&formatted=0").body()
         today.displayName = "Today"
 
-        val tomorrow: AstronomicalEventResults = client.get("https://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=tomorrow&formatted=0").body()
+        val tomorrow: AstronomicalEventResults = client.get("http://api.sunrise-sunset.org/json?lat=${eventInstance.latitude}&lng=${eventInstance.longitude}&date=tomorrow&formatted=0").body()
         tomorrow.displayName = "Tomorrow"
 
         return listOf(today, tomorrow)
